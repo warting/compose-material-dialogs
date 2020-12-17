@@ -108,12 +108,7 @@ fun MaterialDialog.datetimepicker(
                 scrollState = scrollState,
                 isScrollEnabled = false,
                 content = {
-                    DatePickerLayout(
-                        Modifier.padding(top = 16.dp)
-                            .sizeIn(maxWidth = maxWidth, maxHeight = maxHeight),
-                        selectedDate,
-                        currentDate
-                    )
+                    DatePickerLayout()
                     TimePickerLayout(
                         Modifier.padding(top = 16.dp)
                             .sizeIn(maxWidth = maxWidth, maxHeight = maxHeight),

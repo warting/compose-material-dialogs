@@ -1,5 +1,6 @@
 package com.vanpra.composematerialdialogs
 
+import androidx.annotation.ContentView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -194,8 +195,9 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
         val defaultBoxHeight = with(AmbientDensity.current) { 36.dp.toIntPx() }
 
         Box(
-            Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp, end = 8.dp)
-                .layoutId("buttons")
+            Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(top = 8.dp, bottom = 8.dp, end = 8.dp)
+                .layoutId("buttons"),
+            contentAlignment = Alignment.CenterEnd
         ) {
             Layout(
                 { content(buttons) }, Modifier,

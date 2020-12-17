@@ -7,10 +7,10 @@ plugins {
 
 android {
     compileSdkVersion(30)
-    buildToolsVersion = "30.0.2"
+    buildToolsVersion = "30.0.3"
 
     defaultConfig {
-        applicationId = "com.vanpra.amblor"
+        applicationId = "com.vanpra.composematerialdialogdemos"
         minSdkVersion(23)
         targetSdkVersion(30)
         versionCode = 1
@@ -42,13 +42,13 @@ android {
 }
 
 dependencies {
-//    implementation(project(":core"))
-//    implementation(project(":datetime"))
-//    implementation(project(":color"))
+    implementation(project(":core"))
+    implementation(project(":datetime"))
+    implementation(project(":color"))
 
-    implementation(Dependencies.ComposeMaterialDialogs.core)
-    implementation(Dependencies.ComposeMaterialDialogs.datetime)
-    implementation(Dependencies.ComposeMaterialDialogs.color)
+//    implementation(Dependencies.ComposeMaterialDialogs.core)
+//    implementation(Dependencies.ComposeMaterialDialogs.datetime)
+//    implementation(Dependencies.ComposeMaterialDialogs.color)
 
     implementation(Dependencies.Kotlin.stdlib)
 
