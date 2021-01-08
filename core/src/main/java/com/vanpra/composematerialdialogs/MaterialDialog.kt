@@ -1,12 +1,10 @@
 package com.vanpra.composematerialdialogs
 
-import androidx.annotation.ContentView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -22,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.AmbientDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -75,8 +74,10 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
             ThemedDialog(onCloseRequest = { hide() }) {
                 Column(
                     modifier =
-                        Modifier.fillMaxWidth().background(backgroundColor)
-                            .clip(MaterialTheme.shapes.medium)
+                    Modifier
+                        .fillMaxWidth()
+                        .background(backgroundColor)
+                        .clip(MaterialTheme.shapes.medium)
                 ) {
                     this@MaterialDialog.content()
                 }
@@ -97,7 +98,8 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
         center: Boolean = false
     ) {
         val titleText = getString(res, text)
-        var modifier = Modifier.fillMaxWidth()
+        var modifier = Modifier
+            .fillMaxWidth()
             .padding(start = 24.dp, end = 24.dp)
             .preferredHeight(64.dp)
             .wrapContentHeight(Alignment.CenterVertically)
@@ -141,7 +143,9 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
         }
         val titleText = getString(textRes, text)
         Row(
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp).preferredHeight(64.dp),
+            modifier = Modifier
+                .padding(start = 24.dp, end = 24.dp)
+                .preferredHeight(64.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (iconAsset != null) {
@@ -195,9 +199,13 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
         val defaultBoxHeight = with(AmbientDensity.current) { 36.dp.toIntPx() }
 
         Box(
-            Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(top = 8.dp, bottom = 8.dp, end = 8.dp)
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .padding(top = 8.dp, bottom = 8.dp, end = 8.dp)
                 .layoutId("buttons"),
             contentAlignment = Alignment.CenterEnd
+
         ) {
             Layout(
                 { content(buttons) }, Modifier,
@@ -273,10 +281,11 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
         val index by mutableStateOf(positiveEnabled.size)
         var valid by mutableStateOf(allowEmpty)
 
-        remember { positiveEnabled.add(index, allowEmpty) }
-
-        if (waitForPositiveButton) {
-            callbacks.add { onInput(text) }
+        onCommit {
+            positiveEnabled.add(index, allowEmpty)
+            if (waitForPositiveButton) {
+                callbacks.add { onInput(text) }
+            }
         }
 
         Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)) {
@@ -287,7 +296,6 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
                     if (!waitForPositiveButton) {
                         onInput(text)
                     }
-
                     // Have to make temp list in order for state to register change
                     val tempList = positiveEnabled.toMutableList()
                     valid = if (text == "" && allowEmpty) {
@@ -300,12 +308,13 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
                     tempList[index] = valid
                     positiveEnabled = tempList
                 },
-                label = { BasicText(label) },
+                label = { Text(label, color = MaterialTheme.colors.onBackground.copy(0.8f)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { BasicText(hint) },
+                placeholder = { Text(hint, color = MaterialTheme.colors.onBackground.copy(0.5f)) },
                 isErrorValue = !valid,
                 visualTransformation = visualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                textStyle = TextStyle(MaterialTheme.colors.onBackground, fontSize = 16.sp)
             )
 
             if (!valid) {

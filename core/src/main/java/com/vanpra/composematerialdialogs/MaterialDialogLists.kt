@@ -2,9 +2,27 @@ package com.vanpra.composematerialdialogs
 
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.preferredHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.Checkbox
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.onCommit
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.WithConstraints
@@ -85,7 +103,8 @@ fun <T> MaterialDialog.listItems(
             content = {
                 list.forEachIndexed { index, it ->
                     Box(
-                        Modifier.fillMaxWidth()
+                        Modifier
+                            .fillMaxWidth()
                             .clickable(
                                 onClick = {
                                     if (closeOnClick) {
@@ -138,7 +157,8 @@ fun MaterialDialog.listItemsMultiChoice(
             }
         }
     }
-    remember {
+
+    onCommit {
         if (waitForPositiveButton) {
             callbacks.add {
                 onCheckedChange(selectedItems)
@@ -158,11 +178,17 @@ fun MaterialDialog.listItemsMultiChoice(
         val selected = index in selectedItems
 
         Row(
-            Modifier.fillMaxWidth().preferredHeight(48.dp),
+            Modifier
+                .fillMaxWidth()
+                .preferredHeight(48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(checked = selected, onCheckedChange = { onChecked(index) }, enabled = enabled)
-            Spacer(modifier = Modifier.fillMaxHeight().width(32.dp))
+            Spacer(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(32.dp)
+            )
             Text(
                 item,
                 color = if (enabled) {
@@ -195,7 +221,7 @@ fun MaterialDialog.listItemsSingleChoice(
     onChoiceChange: (selected: Int) -> Unit = {}
 ) {
     val disableIndex = remember { positiveEnabled.size }
-    remember {
+    onCommit {
         positiveEnabled.add(disableIndex, initialSelection != null)
     }
 
@@ -215,7 +241,7 @@ fun MaterialDialog.listItemsSingleChoice(
         }
     }
 
-    remember {
+    onCommit {
         if (waitForPositiveButton) {
             callbacks.add { onChoiceChange(selected!!) }
         }
@@ -253,7 +279,9 @@ private fun SingleChoiceItem(
     val enabled = remember(disabledIndices) { index !in disabledIndices }
 
     Row(
-        Modifier.fillMaxWidth().preferredHeight(48.dp),
+        Modifier
+            .fillMaxWidth()
+            .preferredHeight(48.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
@@ -265,7 +293,11 @@ private fun SingleChoiceItem(
             },
             enabled = isEnabled(index)
         )
-        Spacer(modifier = Modifier.fillMaxHeight().width(32.dp))
+        Spacer(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(32.dp)
+        )
         Text(
             item,
             modifier = Modifier,
