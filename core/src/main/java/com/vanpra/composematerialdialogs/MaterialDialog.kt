@@ -66,17 +66,13 @@ class MaterialDialog(private val autoDismiss: Boolean = true) {
      * @param content the body of the dialog
      */
     @Composable
-    fun build(
-        backgroundColor: Color = MaterialTheme.colors.background,
-        content: @Composable MaterialDialog.() -> Unit
-    ) {
+    fun build(content: @Composable MaterialDialog.() -> Unit) {
         if (showing.value) {
             ThemedDialog(onCloseRequest = { hide() }) {
                 Column(
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(backgroundColor)
                         .clip(MaterialTheme.shapes.medium)
                 ) {
                     this@MaterialDialog.content()

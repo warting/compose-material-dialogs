@@ -29,7 +29,8 @@ allprojects {
             jvmTarget = "1.8"
             freeCompilerArgs = listOf(
                 "-Xallow-jvm-ir-dependencies",
-                "-Xskip-prerelease-check"
+                "-Xskip-prerelease-check",
+                "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi"
             )
         }
     }

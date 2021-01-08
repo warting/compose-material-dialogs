@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.unit.dp
 import com.vanpra.composematerialdialogs.MaterialDialog
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -49,8 +50,7 @@ fun MaterialDialog.datetimepicker(
     onCancel: () -> Unit = {},
     onComplete: (LocalDateTime) -> Unit = {}
 ) {
-    val currentDate = initialDateTime.toLocalDate()
-    val selectedDate = remember { mutableStateOf(currentDate) }
+    val datePickerData = remember { DatePickerData(initialDateTime.toLocalDate()) }
 
     val currentTime = remember { initialDateTime.toLocalTime().truncatedTo(ChronoUnit.MINUTES) }
     val selectedTime = remember { mutableStateOf(currentTime) }
@@ -108,7 +108,7 @@ fun MaterialDialog.datetimepicker(
                 scrollState = scrollState,
                 isScrollEnabled = false,
                 content = {
-                    DatePickerLayout()
+                    DatePickerLayout(datePickerData)
                     TimePickerLayout(
                         Modifier.padding(top = 16.dp)
                             .sizeIn(maxWidth = maxWidth, maxHeight = maxHeight),
@@ -133,7 +133,7 @@ fun MaterialDialog.datetimepicker(
                 columnScrollState.smoothScrollTo(0f)
                 currentScreen.value = 1
             } else {
-                onComplete(LocalDateTime.of(selectedDate.value, selectedTime.value))
+                onComplete(LocalDateTime.of(datePickerData.selected, selectedTime.value))
             }
         }
 

@@ -11,7 +11,8 @@ private val DarkColorPalette = darkColors(
     primary = blue500,
     primaryVariant = blue700,
     onPrimary = Color.White,
-    secondary = teal200
+    secondary = teal200,
+    surface = dialogBackground
 )
 
 private val LightColorPalette = lightColors(
