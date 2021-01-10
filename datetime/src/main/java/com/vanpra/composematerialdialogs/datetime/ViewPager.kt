@@ -45,11 +45,17 @@ interface ViewPagerScope {
      * @brief Scroll viewpager to previous page
      */
     fun previous()
+
+    /**
+     * @brief Changes current index based on the value given
+     */
+    fun plusPages(pages: Int)
 }
 
 private data class ViewPagerImpl(
     override val index: Int,
-    val increment: (Int) -> Unit
+    val increment: (Int) -> Unit,
+    val moveBy: (Int) -> Unit
 ) : ViewPagerScope {
     override fun next() {
         increment(1)
@@ -57,6 +63,10 @@ private data class ViewPagerImpl(
 
     override fun previous() {
         increment(-1)
+    }
+
+    override fun plusPages(pages: Int) {
+        moveBy(pages)
     }
 }
 
@@ -97,6 +107,11 @@ fun ViewPager(
                         }
                     }
                 )
+            }
+
+            val moveBy = { pages: Int ->
+                index.value += pages
+                offset.snapTo(width)
             }
 
             val draggable = modifier.draggable(
@@ -146,7 +161,8 @@ fun ViewPager(
             ScrollableRow(
                 content = {
                     Row(
-                        draggable.preferredWidth(maxWidth * 3)
+                        draggable
+                            .preferredWidth(maxWidth * 3)
                             .offset(-offset.toDp())
                     ) {
                         for (x in -1..1) {
@@ -154,9 +170,13 @@ fun ViewPager(
                             val current = x == 0
                             val next = offset.value > width && x == 1
 
-                            Column(Modifier.preferredWidth(maxWidth).alpha(alphas.value[x + 1])) {
+                            Column(
+                                Modifier
+                                    .preferredWidth(maxWidth)
+                                    .alpha(alphas.value[x + 1])) {
                                 if (previous || current || next) {
-                                    val viewPagerImpl = ViewPagerImpl(index.value + x, increment)
+                                    val viewPagerImpl =
+                                        ViewPagerImpl(index.value + x, increment, moveBy)
                                     content(viewPagerImpl)
                                 }
                             }

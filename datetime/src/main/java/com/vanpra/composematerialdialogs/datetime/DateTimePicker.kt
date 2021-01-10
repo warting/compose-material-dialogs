@@ -47,6 +47,7 @@ import java.time.temporal.ChronoUnit
 fun MaterialDialog.datetimepicker(
     title: String,
     initialDateTime: LocalDateTime = LocalDateTime.now(),
+    yearRange: IntRange = IntRange(1900, 2100),
     onCancel: () -> Unit = {},
     onComplete: (LocalDateTime) -> Unit = {}
 ) {
@@ -108,7 +109,7 @@ fun MaterialDialog.datetimepicker(
                 scrollState = scrollState,
                 isScrollEnabled = false,
                 content = {
-                    DatePickerLayout(datePickerData)
+                    DatePickerLayout(datePickerData, yearRange)
                     TimePickerLayout(
                         Modifier.padding(top = 16.dp)
                             .sizeIn(maxWidth = maxWidth, maxHeight = maxHeight),

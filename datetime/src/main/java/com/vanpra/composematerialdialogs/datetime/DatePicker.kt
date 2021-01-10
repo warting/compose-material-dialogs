@@ -1,14 +1,15 @@
 package com.vanpra.composematerialdialogs.datetime
 
-import android.graphics.Paint
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -18,7 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.W400
@@ -47,12 +48,13 @@ internal class DatePickerData(val current: LocalDate) {
 @Composable
 fun MaterialDialog.datepicker(
     initialDate: LocalDate = LocalDate.now(),
+    yearRange: IntRange = IntRange(1900, 2100),
     onCancel: () -> Unit = {},
     onComplete: (LocalDate) -> Unit = {}
 ) {
     val datePickerData = remember { DatePickerData(initialDate) }
 
-    DatePickerLayout(datePickerData)
+    DatePickerLayout(datePickerData, yearRange)
 
     buttons {
         positiveButton("Ok") {
@@ -65,13 +67,9 @@ fun MaterialDialog.datepicker(
 }
 
 @Composable
-internal fun DatePickerLayout(datePickerData: DatePickerData) {
+internal fun DatePickerLayout(datePickerData: DatePickerData, yearRange: IntRange) {
     /* Height doesn't include datePickerData height */
-    Column(
-        Modifier
-            .height(460.dp)
-            .width(328.dp)
-    ) {
+    Column(Modifier.size(328.dp, 460.dp)) {
         CalendarHeader(datePickerData)
 
         val yearPickerShowing = mutableStateOf(false)
@@ -82,23 +80,74 @@ internal fun DatePickerLayout(datePickerData: DatePickerData) {
             Box {
                 androidx.compose.animation.AnimatedVisibility(
                     yearPickerShowing.value,
-                    Modifier.fillMaxSize().zIndex(0.7f),
+                    Modifier
+                        .fillMaxSize()
+                        .zIndex(0.7f),
                     enter = slideInVertically({ -it }),
                     exit = slideOutVertically({ -it })
                 ) {
-                    YearPicker()
+                    YearPicker(yearRange, viewDate, yearPickerShowing)
                 }
 
-                CalendarView(viewDate)
+                CalendarView(viewDate, datePickerData)
             }
         }
     }
 }
 
 @Composable
-private fun YearPicker() {
-    Box(Modifier.zIndex(0.7f).background(MaterialTheme.colors.surface)) {
+private fun ViewPagerScope.YearPicker(
+    yearRange: IntRange,
+    viewDate: LocalDate,
+    yearPickerShowing: MutableState<Boolean>
+) {
+    val state = rememberLazyListState((viewDate.year - yearRange.first) / 3)
 
+    LazyColumn(
+        modifier = Modifier
+            .background(MaterialTheme.colors.surface)
+            .padding(start = 24.dp, end = 24.dp), state = state
+    ) {
+        for (i in yearRange step 3) {
+            item {
+                Row {
+                    for (x in 0 until 3) {
+                        val year = remember(yearRange) { i + x }
+                        val selected = remember(yearRange, viewDate) { year == viewDate.year }
+                        YearPickerItem(year = year, selected = selected) {
+                            if (!selected) {
+                                plusPages((year - viewDate.year) * 12)
+                            }
+                            yearPickerShowing.value = false
+                        }
+
+                        if (x != 2) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun YearPickerItem(year: Int, selected: Boolean, onClick: () -> Unit) {
+    val backgroundColor =
+        if (selected) MaterialTheme.colors.primary else MaterialTheme.colors.surface
+    val textColor = if (selected) MaterialTheme.colors.onPrimary else MaterialTheme.colors.onSurface
+
+    Box(Modifier.size(88.dp, 52.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .size(72.dp, 36.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(backgroundColor)
+                .clickable(onClick = onClick, indication = null),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(year.toString(), style = TextStyle(color = textColor, fontSize = 18.sp))
+        }
     }
 }
 
@@ -173,10 +222,15 @@ private fun ViewPagerScope.CalendarViewHeader(
 }
 
 @Composable
-private fun CalendarView(viewDate: LocalDate) {
+private fun CalendarView(viewDate: LocalDate, datePickerData: DatePickerData) {
     Column(Modifier.padding(start = 12.dp, end = 12.dp)) {
         DayOfWeekHeader()
         val month = getDates(viewDate)
+        val possibleSelected = remember(datePickerData.selected) {
+            viewDate.year == datePickerData.selected.year &&
+                    viewDate.month == datePickerData.selected.month
+        }
+
         for (y in 0..5) {
             Row(
                 modifier = Modifier
@@ -187,7 +241,13 @@ private fun CalendarView(viewDate: LocalDate) {
                 for (x in 0 until 7) {
                     val day = month[y * 7 + x]
                     if (day != -1) {
-                        DateSelectionBox(day)
+                        val selected = remember(datePickerData.selected) {
+                            possibleSelected && day == datePickerData.selected.dayOfMonth
+                        }
+                        DateSelectionBox(day, selected) {
+                            datePickerData.selected =
+                                LocalDate.of(viewDate.year, viewDate.month, day)
+                        }
                     } else {
                         Box(Modifier.size(40.dp))
                     }
@@ -202,14 +262,15 @@ private fun CalendarView(viewDate: LocalDate) {
 }
 
 @Composable
-fun DateSelectionBox(date: Int) {
+fun DateSelectionBox(date: Int, selected: Boolean, onClick: () -> Unit) {
+    val backgroundColor =
+        if (selected) MaterialTheme.colors.primary else MaterialTheme.colors.surface
+    val textColor = if (selected) MaterialTheme.colors.onPrimary else MaterialTheme.colors.onSurface
     Box(
         Modifier
             .size(40.dp)
             .clickable(
-                onClick = {
-//                selected.value = LocalDate.of(yearMonth.year, yearMonth.month, it)
-                },
+                onClick = onClick,
                 indication = null
             ), contentAlignment = Alignment.Center
     ) {
@@ -217,16 +278,10 @@ fun DateSelectionBox(date: Int) {
             date.toString(),
             modifier = Modifier
                 .size(36.dp)
-                .clickable(
-                    onClick = {
-//                        selected.value = LocalDate.of(yearMonth.year, yearMonth.month, it)
-                    },
-                    indication = null
-                )
-//                .then(selectedModifier)
+                .clip(CircleShape)
+                .background(backgroundColor)
                 .wrapContentSize(Alignment.Center),
-            color = MaterialTheme.colors.onBackground,
-            style = TextStyle(fontSize = 12.sp)
+            style = TextStyle(color = textColor, fontSize = 12.sp)
         )
     }
 }
@@ -305,7 +360,7 @@ private fun CalendarHeader(datePickerData: DatePickerData) {
 @Preview
 @Composable
 fun DateDialogPreview() {
-    DatePickerLayout(DatePickerData(LocalDate.now()))
+    DatePickerLayout(DatePickerData(LocalDate.now()), IntRange(1900, 2100))
 }
 
 private fun getDates(date: LocalDate): List<Int> {
