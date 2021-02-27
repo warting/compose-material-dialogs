@@ -2,42 +2,47 @@ package com.vanpra.composematerialdialogs.datetime
 
 import android.graphics.Paint
 import android.graphics.Rect
+import android.util.Log
+import android.util.Log.d
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.preferredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.gesture.DragObserver
-import androidx.compose.ui.gesture.dragGestureFilter
-import androidx.compose.ui.gesture.pressIndicatorGestureFilter
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.WithConstraints
-import androidx.compose.ui.platform.AmbientDensity
+import androidx.compose.ui.input.pointer.consumePositionChange
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vanpra.composematerialdialogs.MaterialDialog
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import java.util.logging.Logger
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -84,8 +89,13 @@ internal fun TimePickerLayout(
 ) {
     val currentScreen = remember { mutableStateOf(0) }
     Box(modifier) {
-        WithConstraints {
-            ScrollableColumn(Modifier.heightIn(max = maxHeight * 0.8f)) {
+        BoxWithConstraints {
+            val scrollState = rememberScrollState()
+            Column(
+                Modifier
+                    .heightIn(max = maxHeight * 0.8f)
+                    .verticalScroll(scrollState)
+            ) {
                 TimeLayout(currentScreen, selectedTime)
                 Crossfade(currentScreen) {
                     when (it.value) {
@@ -145,7 +155,6 @@ private fun TimeLayout(currentScreen: MutableState<Int>, selectedTime: MutableSt
                 color = color.copy(hourAlpha),
                 modifier = Modifier.clickable(
                     onClick = { currentScreen.value = 0 },
-                    indication = null
                 )
             )
 
@@ -157,7 +166,6 @@ private fun TimeLayout(currentScreen: MutableState<Int>, selectedTime: MutableSt
                 color = color.copy(minAlpha),
                 modifier = Modifier.clickable(
                     onClick = { currentScreen.value = 1 },
-                    indication = null
                 )
             )
         }
@@ -173,10 +181,9 @@ private fun ClockLayout(
     onAnchorChange: (Int) -> Unit = {},
     onLift: () -> Unit = {}
 ) {
-    val outerRadius = with(AmbientDensity.current) { 100.dp.toPx() }
-    val innerRadius = with(AmbientDensity.current) { 60.dp.toPx() }
+    val outerRadius = with(LocalDensity.current) { 100.dp.toPx() }
+    val innerRadius = with(LocalDensity.current) { 60.dp.toPx() }
     val selectedRadius = 70f
-
     val offset = remember { mutableStateOf(Offset.Zero) }
     val center = remember { mutableStateOf(Offset.Zero) }
     val namedAnchor = remember { mutableStateOf(true) }
@@ -254,40 +261,40 @@ private fun ClockLayout(
         }
     }
 
-    val dragObserver =
-        object : DragObserver {
-            override fun onStart(downPosition: Offset) {
-                offset.value = Offset(downPosition.x, downPosition.y)
-            }
-
-            override fun onStop(velocity: Offset) {
-                super.onStop(velocity)
-                onLift()
-            }
-
-            override fun onDrag(dragDistance: Offset): Offset {
-                offset.value = Offset(
-                    offset.value.x + dragDistance.x,
-                    offset.value.y + dragDistance.y
-                )
-                updateAnchor()
-                return dragDistance
-            }
-        }
-
-    val touchFilter = { pos: Offset ->
-        offset.value = pos
-        updateAnchor()
-    }
-
-    WithConstraints {
-        Box(
+    BoxWithConstraints {
+        BoxWithConstraints(
             Modifier
-                .preferredSize(maxWidth)
-                .pressIndicatorGestureFilter(touchFilter, onLift)
-                .dragGestureFilter(dragObserver)
+                .size(maxWidth)
+                .pointerInput(Unit) {
+
+                    detectDragGestures(
+                        onDragStart = {
+                            Log.d("POINTER", "onDragStart: $it")
+                            offset.value.x + it.x
+                            offset.value.y + it.y
+                        },
+                        onDragEnd = {
+                            Log.d("POINTER", "onDragEnd")
+                            onLift()
+                        }
+                    ) { change, dragAmount ->
+
+                        Log.d("POINTER", "change: $change")
+                        Log.d("POINTER", "dragAmount: $dragAmount")
+                        val original = Offset(offset.value.x, offset.value.y)
+                        val summed = original + dragAmount
+                        val newValue = Offset(
+                            x = summed.x,//.coerceIn(0f, size.width - 50.dp.toPx()),
+                            y = summed.y,//.coerceIn(0f, size.height - 50.dp.toPx()),
+                        )
+
+                        offset.value.x + newValue.x
+                        offset.value.y + newValue.y
+                        updateAnchor()
+                    }
+                }
         ) {
-            onCommit {
+            SideEffect {
                 center.value =
                     Offset(constraints.maxWidth / 2f, constraints.maxWidth / 2f)
                 offset.value = center.value
